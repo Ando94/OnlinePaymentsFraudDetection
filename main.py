@@ -24,12 +24,19 @@ def main():
     print("Starting fraud detection analysis...")
     # Load and check data
     df = load_data()
+
+
+    y = df['isFraud']
+    x = df.drop(['isFraud', 'isFlaggedFraud'], axis=1)
+
+    print(df)
+
     if df is not None:
         print("Processing data...")
         print("\nFirst few rows:")
         print(df.head())
         
-        a = df.head()
+        a = df.columns
         # Create and show a plot
         if 'type' in df.columns:
             fig = px.pie(df, names='type', title='Distribution of Transaction Types')
@@ -37,16 +44,18 @@ def main():
         else:
             print("No 'type' column found in the dataset")
         
-        X_train = train_test_split(
-            df.head().count(),
+        print(df)
+
+        X_train, X_test, y_train, y_test = train_test_split(
+            df[df.columns],
             df.values,
             test_size=0.2,
             random_state=42
         )
         clf = DecisionTreeClassifier(random_state=1)
-        # clf.fit(X_train, y_train)
-        # clf.score(X_test, y_test)
-        # clf.predict(X_test)
+        clf.fit(X_train, y_train)
+        clf.score(X_test, y_test)
+        clf.predict(X_test)
 
     else:
         print("Could not proceed without data.")
