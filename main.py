@@ -25,18 +25,16 @@ def main():
     # Load and check data
     df = load_data()
 
-
-    y = df['isFraud']
-    x = df.drop(['isFraud', 'isFlaggedFraud'], axis=1)
-
-    print(df)
-
     if df is not None:
         print("Processing data...")
         print("\nFirst few rows:")
         print(df.head())
-        
-        a = df.columns
+
+        # Define target and initial feature set
+        y = df['isFraud']
+        # Drop identifier and target columns from features
+        X = df.drop(['isFraud', 'isFlaggedFraud', 'nameOrig', 'nameDest'], axis=1, errors='ignore')
+     
         # Create and show a plot
         if 'type' in df.columns:
             fig = px.pie(df, names='type', title='Distribution of Transaction Types')
@@ -44,19 +42,27 @@ def main():
         else:
             print("No 'type' column found in the dataset")
         
-        print(df)
+        # Encode categorical features (like 'type') and ensure numeric-only input
+        obj_cols = X.select_dtypes(include=['object', 'category']).columns.tolist()
+        if obj_cols:
+            X = pd.get_dummies(X, columns=obj_cols, drop_first=True)
 
+        # Ensure there are no non-numeric columns left
+        non_numeric = X.select_dtypes(exclude=[np.number]).columns.tolist()
+        if non_numeric:
+            print(f"Warning: non-numeric columns present and will be dropped: {non_numeric}")
+            X = X.drop(columns=non_numeric)
+
+        # Align X and y and split
         X_train, X_test, y_train, y_test = train_test_split(
-            df[df.columns],
-            df.values,
-            test_size=0.2,
-            random_state=42
+            X, y,
+            test_size=0.2
         )
         clf = DecisionTreeClassifier(random_state=1)
         clf.fit(X_train, y_train)
-        clf.score(X_test, y_test)
-        clf.predict(X_test)
-
+        print("X_test:", X_test[:100])
+        print("Test score:", clf.score(X_test, y_test))
+        print("Sample predictions:", clf.predict(X_test)[:100])
     else:
         print("Could not proceed without data.")
 
